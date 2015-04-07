@@ -9,6 +9,8 @@
 #import "Tuna.h"
 #import "Xcode.h"
 
+#define ISSUE_REPORT_URL @"https://github.com/dealforest/Tuna/issues"
+
 static id _sharedInstance = nil;
 
 
@@ -71,7 +73,6 @@ typedef NS_ENUM(NSInteger, EditorType)
 
 - (void)createMenuItem
 {
-    
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
     NSString *pluginName = [bundle objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
     NSString *pluginVersion = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
@@ -81,6 +82,13 @@ typedef NS_ENUM(NSInteger, EditorType)
         NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:[@"Plugin Version: " stringByAppendingString:pluginVersion]
                                                       action:nil
                                                keyEquivalent:@""];
+        item;
+    })];
+    [pluginMenu addItem:({
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Preferences..."
+                                                      action:@selector(openPreferencesWindow)
+                                               keyEquivalent:@""];
+        item.target = self;
         item;
     })];
     
@@ -151,6 +159,29 @@ typedef NS_ENUM(NSInteger, EditorType)
 }
 
 #pragma mark - menu selector
+
+- (void)openPreferencesWindow
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSWindowController *controller;
+    @try {
+        NSStoryboard *storyBoard = [NSStoryboard storyboardWithName:@"Preferences" bundle:bundle];
+        controller = [storyBoard instantiateInitialController];
+    }
+    @catch (NSException *exception) {
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Failed to open preferences."
+                                          defaultButton:@"OK"
+                                        alternateButton:@"Report an Issue"
+                                            otherButton:nil
+                              informativeTextWithFormat:@"This might happen when updating the plugin to a newer version. To completely load the new plugin Xcode restart is required.\n\nIf the issue persists after a restart please report an issue."];
+        if ([alert runModal] == NSAlertAlternateReturn) {
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:ISSUE_REPORT_URL]];
+        }
+    }
+    if (controller) {
+        [[NSApplication sharedApplication] runModalForWindow:controller.window];
+    }
+}
 
 - (void)toggleEnableFileBreakpoint
 {
